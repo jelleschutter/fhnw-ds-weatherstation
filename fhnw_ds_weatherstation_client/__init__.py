@@ -268,11 +268,10 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
                 __add_data_to_db(config, normalized_data, station)
                 if append_to_csv:
                     # save data as cet
-                    normalized_data['timestamp_cet'] = normalized_data['timestamp'] + timedelta(hours=1)
-                    normalized_data.drop('timestamp', axis=1, inplace=True)
+                    normalized_data['timestamp_cet'] = normalized_data.index + timedelta(hours=1)
                     normalized_data.set_index('timestamp_cet', inplace=True)
 
-                    __append_df_to_csv(normalized_data, os.path.join(config.historic_data_folder ,'messwerte_' + station + '_' + str(last_db_days[idx].year) + '.csv'))
+                    __append_df_to_csv(normalized_data, os.path.join(config.historic_data_folder ,'messwerte_' + station + '_' + str(normalized_data.index[0].year) + '.csv'))
                 print('Handle ' + station + ' from ' + str(normalized_data.index[0]) + ' to ' + str(normalized_data.index[-1]))
             else:
                 print('No new data received for ' + station)
