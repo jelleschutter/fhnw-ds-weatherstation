@@ -19,7 +19,7 @@ class Config:
     stations_force_query_last_entry = False
     stations_last_entries = {}
     keys_mapping = {
-        'timestamp': 'timestamp',
+        'values.timestamp_cet.value': 'timestamp_cet',
         'values.air_temperature.value': 'air_temperature',
         'values.barometric_pressure_qfe.value': 'barometric_pressure_qfe',
         'values.dew_point.value': 'dew_point',
@@ -101,7 +101,9 @@ def __get_data_of_day(day, station):
 
 def __define_types(data, date_format):
     if not data.empty:
-        data['timestamp'] = pd.to_datetime(data['timestamp'], format=date_format)
+        # convert cet to utc
+        data['timestamp'] = pd.to_datetime(data['timestamp_cet'], format=date_format) - timedelta(hours=1)
+        data.drop('timestamp_cet', axis=1, inplace=True)
         data.set_index('timestamp', inplace=True)
 
     for column in data.columns[0:]:
@@ -120,7 +122,7 @@ def __clean_data(config, data_of_last_day, last_db_entry, station):
         if mapping != column:
             normalized.drop(columns=column, inplace=True)
 
-    normalized = __define_types(normalized, '%Y-%m-%dT%H:%M:%S.%fZ')
+    normalized = __define_types(normalized, '%Y-%m-%dT%H:%M:%S')
 
     # remove all entries older than last element
     last_db_entry_time = None
@@ -201,7 +203,7 @@ def import_historic_data(config):
 
             __import_csv_file(config, station, '2007-2019')
 
-            current_time = datetime.datetime.utcnow()
+            current_time = datetime.datetime.utcnow() + timedelta(hours=1)
             running_year = 2020
             while running_year <= current_time.year:
                 __import_csv_file(config, station, str(running_year))
@@ -222,7 +224,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
 
    """
     # access API for current data
-    current_time = datetime.datetime.utcnow()
+    current_time = datetime.datetime.utcnow() + timedelta(hours=1)
     current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
     last_db_days = [current_day] * len(config.stations)
 
@@ -237,8 +239,6 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
     check_db_day = min(last_db_days)
 
     while True:
-        current_time = datetime.datetime.utcnow()
-
         # check if all historic data (retrieved from API) has been processed
         if periodic_read and check_db_day >= current_day:
             # once every 10 Min
@@ -250,7 +250,6 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
 
             print('Sleep for ' + str(sleep_sec) + 's (from ' + str(current_time) + ' until ' + str(sleep_until) + ') when next data will be queried.')
             sleep(sleep_sec)
-            current_time = datetime.datetime.utcnow()
             current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
         elif not periodic_read and check_db_day >= current_day:
             # stop here
@@ -268,6 +267,11 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
             if normalized_data.size > 0:
                 __add_data_to_db(config, normalized_data, station)
                 if append_to_csv:
+                    # save data as cet
+                    normalized_data['timestamp_cet'] = normalized_data['timestamp'] + timedelta(hours=1)
+                    normalized_data.drop('timestamp', axis=1, inplace=True)
+                    normalized_data.set_index('timestamp_cet', inplace=True)
+
                     __append_df_to_csv(normalized_data, os.path.join(config.historic_data_folder ,'messwerte_' + station + '_' + str(last_db_days[idx].year) + '.csv'))
                 print('Handle ' + station + ' from ' + str(normalized_data.index[0]) + ' to ' + str(normalized_data.index[-1]))
             else:
