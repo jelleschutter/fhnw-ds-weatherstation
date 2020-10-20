@@ -1,13 +1,13 @@
 import pandas as pd
+from pandas import json_normalize
 import numpy as np
 from influxdb import DataFrameClient
 import requests
 import json
-import pandas as pd
-from pandas import json_normalize
 import signal
 import sys
 import datetime
+from datetime import timedelta
 from time import sleep
 import os
 
