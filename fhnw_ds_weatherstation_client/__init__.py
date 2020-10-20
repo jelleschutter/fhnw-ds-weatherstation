@@ -122,7 +122,7 @@ def __clean_data(config, data_of_last_day, last_db_entry, station):
         if mapping != column:
             normalized.drop(columns=column, inplace=True)
 
-    normalized = __define_types(normalized, '%Y-%m-%dT%H:%M:%S')
+    normalized = __define_types(normalized, '%d.%m.%Y %H:%M:%S')
 
     # remove all entries older than last element
     last_db_entry_time = None
