@@ -15,7 +15,7 @@ class Config:
     db_host='localhost'
     db_port=8086
     db_name='meteorology'
-    stations_all = ['mythenquai', 'tiefenbrunnen']
+    stations = ['mythenquai', 'tiefenbrunnen']
     stations_force_query_last_entry = False
     stations_last_entries = {}
     keys_mapping = {
