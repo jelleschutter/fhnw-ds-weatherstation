@@ -15,7 +15,9 @@ sudo pip3 install fhnw_ds_weatherstation_client
 ```bash
 mkdir data && cd data
 wget https://raw.githubusercontent.com/jelleschutter/fhnw-ds-weatherstation-client/data/history/messwerte_mythenquai_2007-2019.csv
+wget https://raw.githubusercontent.com/jelleschutter/fhnw-ds-weatherstation-client/data/history/messwerte_mythenquai_2020.csv
 wget https://raw.githubusercontent.com/jelleschutter/fhnw-ds-weatherstation-client/data/history/messwerte_tiefenbrunnen_2007-2019.csv
+wget https://raw.githubusercontent.com/jelleschutter/fhnw-ds-weatherstation-client/data/history/messwerte_tiefenbrunnen_2020.csv
 cd ..
 ```
 
