@@ -6,8 +6,7 @@ import requests
 import json
 import signal
 import sys
-import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from time import sleep
 import os
 
@@ -203,7 +202,7 @@ def import_historic_data(config):
 
             __import_csv_file(config, station, '2007-2019')
 
-            current_time = datetime.datetime.utcnow() + timedelta(hours=1)
+            current_time = datetime.utcnow() + timedelta(hours=1)
             running_year = 2020
             while running_year <= current_time.year:
                 __import_csv_file(config, station, str(running_year))
@@ -224,7 +223,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
 
    """
     # access API for current data
-    current_time = datetime.datetime.utcnow() + timedelta(hours=1)
+    current_time = datetime.utcnow() + timedelta(hours=1)
     current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
     last_db_days = [current_day] * len(config.stations)
 
@@ -242,9 +241,9 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
         # check if all historic data (retrieved from API) has been processed
         if periodic_read and check_db_day >= current_day:
             # once every 10 Min
-            sleep_until = current_time + datetime.timedelta(minutes=10)
+            sleep_until = current_time + timedelta(minutes=10)
             # once per day
-            # sleep_until = current_time + datetime.timedelta(days=1)
+            # sleep_until = current_time + timedelta(days=1)
             # sleep_until = sleep_until.replace(hour=6, minute=0, second=0, microsecond=0)
             sleep_sec = (sleep_until - current_time).total_seconds()
 
