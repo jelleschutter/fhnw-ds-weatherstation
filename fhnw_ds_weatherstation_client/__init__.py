@@ -3,6 +3,7 @@ from pandas import json_normalize
 import numpy as np
 from influxdb import DataFrameClient
 import requests
+from requests.exceptions import ConnectionError
 import json
 import signal
 import sys
@@ -91,12 +92,18 @@ def __get_data_of_day(day, station):
         'endDate': day_str
     }
     url = base_url.format(station)
-    response = requests.get(url, params=payload)
-    if(response.ok):
-        jData = json.loads(response.content)
-        return jData
-    else:
-        response.raise_for_status()
+    while True:
+        try:
+            response = requests.get(url, params=payload)
+            if(response.ok):
+                jData = json.loads(response.content)
+                return jData
+            else:
+                response.raise_for_status()
+                break
+        except ConnectionError as e:
+            print(f'Request for \'{e.request.url}\' failed. ({e.args[0].args[0]})\nTrying again in 10 seconds...')
+            sleep(10)
 
 def __define_types(data, date_format):
     if not data.empty:
