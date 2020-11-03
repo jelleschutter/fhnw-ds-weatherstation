@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='fhnw_ds_weatherstation_client',
-    version='0.0.7',
+    version='0.0.8',
     author='Jelle Schutter',
     author_email='jelle@schutter.xyz',
     description='Provides access to the Wasserschutzpolizei Zurich live and historic weather data.',
