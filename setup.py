@@ -11,7 +11,7 @@ setuptools.setup(
     description='Provides access to the Wasserschutzpolizei Zurich live and historic weather data.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/jelleschutter/fhnw-sg-ds-weatherstation-client',
+    url='https://github.com/jelleschutter/fhnw-ds-weatherstation-client',
     packages=setuptools.find_packages(),
     install_requires=[
         'pandas',
