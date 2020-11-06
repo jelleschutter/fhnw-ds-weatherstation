@@ -231,7 +231,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
    """
     # access API for current data
     current_time = datetime.utcnow() + timedelta(hours=1)
-    current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    current_day = current_time.replace(minute=0, second=0, microsecond=0)
     last_db_days = [current_day] * len(config.stations)
 
     for idx, station in enumerate(config.stations):
