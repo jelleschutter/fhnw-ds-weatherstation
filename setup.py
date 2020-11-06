@@ -14,7 +14,7 @@ setuptools.setup(
     url='https://github.com/jelleschutter/fhnw-ds-weatherstation-client',
     packages=setuptools.find_packages(),
     install_requires=[
-        'pandas',
+        'pandas>=1',
         'influxdb',
         'requests',
         'numpy',
