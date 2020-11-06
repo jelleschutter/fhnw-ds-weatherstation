@@ -231,7 +231,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
    """
     # access API for current data
     current_time = datetime.utcnow() + timedelta(hours=1)
-    current_day = current_time.replace(minute=0, second=0, microsecond=0)
+    current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
     last_db_days = [current_day] * len(config.stations)
 
     for idx, station in enumerate(config.stations):
@@ -243,6 +243,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
         print('\nPress Ctrl+C to stop!\n')
 
     check_db_day = min(last_db_days)
+    check_db_day = check_db_day.replace(hour=0, minute=0, second=0, microsecond=0)
 
     while True:
         # check if all historic data (retrieved from API) has been processed
@@ -257,8 +258,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
             print('Sleep for ' + str(sleep_sec) + 's (from ' + str(current_time) + ' until ' + str(sleep_until) + ') when next data will be queried.')
             sleep(sleep_sec)
             current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
-        elif not periodic_read and check_db_day >= current_day:
-            # stop here
+        elif not periodic_read and check_db_day > current_day:
             return
 
         for idx, station in enumerate(config.stations):
