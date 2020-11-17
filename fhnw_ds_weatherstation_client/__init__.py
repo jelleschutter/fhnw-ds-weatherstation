@@ -262,7 +262,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
             return
 
         for idx, station in enumerate(config.stations):
-            if last_db_days[idx] > check_db_day:
+            if last_db_days[idx].replace(hour=0, minute=0, second=0, microsecond=0) > check_db_day:
                 continue
             last_db_entry = __get_last_db_entry(config, station)
             last_db_days[idx] = __extract_last_db_day(last_db_entry, station, last_db_days[idx])
