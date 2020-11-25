@@ -10,6 +10,7 @@ import sys
 from datetime import datetime, timedelta
 from time import sleep
 import os
+import threading
 
 class Config:
     db_host='localhost'
@@ -238,7 +239,7 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
         last_db_entry = __get_last_db_entry(config, station)
         last_db_days[idx] = __extract_last_db_day(last_db_entry, station, last_db_days[idx])
 
-    if periodic_read:
+    if periodic_read and threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, __signal_handler)
         print('\nPress Ctrl+C to stop!\n')
 
