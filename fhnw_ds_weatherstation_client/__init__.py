@@ -11,6 +11,8 @@ from datetime import datetime, timedelta
 from time import sleep
 import os
 import threading
+from collections import deque
+from io import StringIO
 
 class Config:
     db_host='localhost'
@@ -284,4 +286,44 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
                 print('No new data received for ' + station)
         check_db_day = check_db_day + pd.DateOffset(1)
 
+
+def db_is_up_to_date(config):
+    """Checks if all CSV files have been synced to database.
+
+    Parameters:
+    config (Config): The Config containing the DB connection info and CSV folder info
+
+    """
+    # read historic data from files
+    max_file = {}
+
+    for station in config.stations:
+        last_entry = __get_last_db_entry(config, station)
+
+        if last_entry[station].empty:
+            print('Database is empty.')
+            return False
+
+        file_name = os.path.join(config.historic_data_folder, 'messwerte_' + station + '_2007-2019.csv')
+        if os.path.isfile(file_name):
+            max_file[station] = file_name
+
+        current_time = datetime.utcnow() + timedelta(hours=1)
+        running_year = 2020
+        while running_year <= current_time.year:
+
+            file_name = os.path.join(config.historic_data_folder, 'messwerte_' + station + '_' + str(running_year) + '.csv')
+            if os.path.isfile(file_name):
+                max_file[station] = file_name
+            running_year += 1
+
+        with open(max_file[station], 'r') as f:
+            headers = f.readline()
+            last_line = deque(f, 1)
+            last_line_csv = pd.read_csv(StringIO(headers + ''.join(last_line)))
+            last_csv_entry = __define_types(last_line_csv, '%Y-%m-%dT%H:%M:%S')
+            if last_csv_entry.index[0] != last_entry[station].index[0].replace(tzinfo=None):
+                return False
+
+    return True
 
