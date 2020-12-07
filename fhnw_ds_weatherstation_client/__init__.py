@@ -15,9 +15,9 @@ from collections import deque
 from io import StringIO
 
 class Config:
-    db_host='localhost'
-    db_port=8086
-    db_name='meteorology'
+    db_host = 'localhost'
+    db_port = 8086
+    db_name = 'meteorology'
     stations = ['mythenquai', 'tiefenbrunnen']
     stations_force_query_last_entry = False
     stations_last_entries = {}
@@ -60,12 +60,12 @@ def __get_last_db_entry(config, station):
     if last_entry is None:
         try:
             # we are only interested in time, however need to provide any field to make query work
-            query = 'SELECT last(air_temperature) FROM "{}" ORDER BY time DESC LIMIT 1'.format(station)
+            query = f'SELECT air_temperature FROM {station} ORDER BY time DESC LIMIT 1'
             last_entry = config.client.query(query)
         except:
-            # There are influxDB versions which have an issue with above "last" query
+            # There are influxDB versions which have an issue with above query
             print('An exception occurred while querying last entry from DB for ' + station + '. Try alternative approach.')
-            query = 'SELECT * FROM "{}" ORDER BY time DESC LIMIT 1'.format(station)
+            query = f'SELECT * FROM {station} ORDER BY time DESC LIMIT 1'
             last_entry = config.client.query(query)
 
     __set_last_db_entry(config, station, last_entry)
@@ -81,7 +81,7 @@ def __extract_last_db_day(last_entry, station, default_last_db_day):
 
         if val is not None:
             if not val.index.empty:
-                return val.index[0].replace(tzinfo=None)
+                return val.index[0].replace(tzinfo = None)
 
     return default_last_db_day
 
@@ -97,7 +97,7 @@ def __get_data_of_day(day, station):
     url = base_url.format(station)
     while True:
         try:
-            response = requests.get(url, params=payload)
+            response = requests.get(url, params = payload)
             if(response.ok):
                 jData = json.loads(response.content)
                 return jData
@@ -111,9 +111,9 @@ def __get_data_of_day(day, station):
 def __define_types(data, date_format):
     if not data.empty:
         # convert cet to utc
-        data['timestamp'] = pd.to_datetime(data['timestamp_cet'], format=date_format) - timedelta(hours=1)
-        data.drop('timestamp_cet', axis=1, inplace=True)
-        data.set_index('timestamp', inplace=True)
+        data['timestamp'] = pd.to_datetime(data['timestamp_cet'], format = date_format) - timedelta(hours = 1)
+        data.drop('timestamp_cet', axis = 1, inplace = True)
+        data.set_index('timestamp', inplace = True)
 
     for column in data.columns[0:]:
         if column != 'timestamp':
@@ -129,7 +129,7 @@ def __clean_data(config, data_of_last_day, last_db_entry, station):
         if mapping is not None:
             normalized[mapping] = normalized[column]
         if mapping != column:
-            normalized.drop(columns=column, inplace=True)
+            normalized.drop(columns = column, inplace = True)
 
     normalized = __define_types(normalized, '%d.%m.%Y %H:%M:%S')
 
@@ -139,27 +139,27 @@ def __clean_data(config, data_of_last_day, last_db_entry, station):
         last_db_entry_time = last_db_entry
     elif isinstance(last_db_entry, dict):
         last_db_entry_time = last_db_entry.get(station, None)
-    last_db_entry_time = last_db_entry_time.index[0].replace(tzinfo=None)
-    normalized.drop(normalized[normalized.index <= last_db_entry_time].index, inplace=True)
+    last_db_entry_time = last_db_entry_time.index[0].replace(tzinfo = None)
+    normalized.drop(normalized[normalized.index <= last_db_entry_time].index, inplace = True)
 
     return normalized
 
 def __add_data_to_db(config, data, station):
-    config.client.write_points(data, station, time_precision='s', database=config.db_name)
+    config.client.write_points(data, station, time_precision = 's', database = config.db_name)
     __set_last_db_entry(config, station, data.tail(1))
 
-def __append_df_to_csv(data, csv_file_path, sep=','):
+def __append_df_to_csv(data, csv_file_path, sep = ','):
     header = False
     if not os.path.isfile(csv_file_path):
         header = True
 
-    data.to_csv(csv_file_path, mode='a', sep=sep, header=header, date_format='%Y-%m-%dT%H:%M:%S')
+    data.to_csv(csv_file_path, mode = 'a', sep = sep, header = header, date_format = '%Y-%m-%dT%H:%M:%S')
 
 def __import_csv_file(config, station, year):
     file_name = os.path.join(config.historic_data_folder, 'messwerte_' + station + '_' + year + '.csv')
     if os.path.isfile(file_name):
         print('\tLoad ' + file_name)
-        for chunk in pd.read_csv(file_name, delimiter=',', chunksize=config.historic_data_chunksize):
+        for chunk in pd.read_csv(file_name, delimiter = ',', chunksize = config.historic_data_chunksize):
             chunk = __define_types(chunk, '%Y-%m-%dT%H:%M:%S')
             print('Add ' + station + ' from ' + str(chunk.index[0]) + ' to ' + str(chunk.index[-1]))
             __add_data_to_db(config, chunk, station)
@@ -181,7 +181,7 @@ def connect_db(config):
    """
     if config.client is None:
         # https://www.influxdata.com/blog/getting-started-python-influxdb/
-        config.client = DataFrameClient(host=config.db_host, port=config.db_port, database=config.db_name)
+        config.client = DataFrameClient(host = config.db_host, port = config.db_port, database = config.db_name)
         config.client.switch_database(config.db_name)
 
 def clean_db(config):
@@ -212,7 +212,7 @@ def import_historic_data(config):
 
             __import_csv_file(config, station, '2007-2019')
 
-            current_time = datetime.utcnow() + timedelta(hours=1)
+            current_time = datetime.utcnow() + timedelta(hours = 1)
             running_year = 2020
             while running_year <= current_time.year:
                 __import_csv_file(config, station, str(running_year))
@@ -223,7 +223,7 @@ def import_historic_data(config):
         print('Historic data for ' + station + ' loaded.')
 
 
-def import_latest_data(config, append_to_csv=False, periodic_read=False):
+def import_latest_data(config, append_to_csv = False, periodic_read = False):
     """Reads the latest data from the Wasserschutzpolizei Zurich weather API
 
     Parameters:
@@ -233,8 +233,8 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
 
    """
     # access API for current data
-    current_time = datetime.utcnow() + timedelta(hours=1)
-    current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    current_time = datetime.utcnow() + timedelta(hours = 1)
+    current_day = current_time.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
     last_db_days = [current_day] * len(config.stations)
 
     for idx, station in enumerate(config.stations):
@@ -246,26 +246,26 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
         print('\nPress Ctrl+C to stop!\n')
 
     check_db_day = min(last_db_days)
-    check_db_day = check_db_day.replace(hour=0, minute=0, second=0, microsecond=0)
+    check_db_day = check_db_day.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
 
     while True:
         # check if all historic data (retrieved from API) has been processed
         if periodic_read and check_db_day >= current_day:
             # once every 10 Min
-            sleep_until = current_time + timedelta(minutes=10)
+            sleep_until = current_time + timedelta(minutes = 10)
             # once per day
-            # sleep_until = current_time + timedelta(days=1)
-            # sleep_until = sleep_until.replace(hour=6, minute=0, second=0, microsecond=0)
+            # sleep_until = current_time + timedelta(days = 1)
+            # sleep_until = sleep_until.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
             sleep_sec = (sleep_until - current_time).total_seconds()
 
             print('Sleep for ' + str(sleep_sec) + 's (from ' + str(current_time) + ' until ' + str(sleep_until) + ') when next data will be queried.')
             sleep(sleep_sec)
-            current_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+            current_day = current_time.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
         elif not periodic_read and check_db_day > current_day:
             return
 
         for idx, station in enumerate(config.stations):
-            if last_db_days[idx].replace(hour=0, minute=0, second=0, microsecond=0) > check_db_day:
+            if last_db_days[idx].replace(hour = 0, minute = 0, second = 0, microsecond = 0) > check_db_day:
                 continue
             last_db_entry = __get_last_db_entry(config, station)
             last_db_days[idx] = __extract_last_db_day(last_db_entry, station, last_db_days[idx])
@@ -277,8 +277,8 @@ def import_latest_data(config, append_to_csv=False, periodic_read=False):
                 __add_data_to_db(config, normalized_data, station)
                 if append_to_csv:
                     # save data as cet
-                    normalized_data['timestamp_cet'] = normalized_data.index + timedelta(hours=1)
-                    normalized_data.set_index('timestamp_cet', inplace=True)
+                    normalized_data['timestamp_cet'] = normalized_data.index + timedelta(hours = 1)
+                    normalized_data.set_index('timestamp_cet', inplace = True)
 
                     __append_df_to_csv(normalized_data, os.path.join(config.historic_data_folder ,'messwerte_' + station + '_' + str(normalized_data.index[0].year) + '.csv'))
                 print('Handle ' + station + ' from ' + str(normalized_data.index[0]) + ' to ' + str(normalized_data.index[-1]))
@@ -308,7 +308,7 @@ def db_is_up_to_date(config):
         if os.path.isfile(file_name):
             max_file[station] = file_name
 
-        current_time = datetime.utcnow() + timedelta(hours=1)
+        current_time = datetime.utcnow() + timedelta(hours = 1)
         running_year = 2020
         while running_year <= current_time.year:
 
@@ -322,7 +322,7 @@ def db_is_up_to_date(config):
             last_line = deque(f, 1)
             last_line_csv = pd.read_csv(StringIO(headers + ''.join(last_line)))
             last_csv_entry = __define_types(last_line_csv, '%Y-%m-%dT%H:%M:%S')
-            if last_csv_entry.index[0] != last_entry[station].index[0].replace(tzinfo=None):
+            if last_csv_entry.index[0] != last_entry[station].index[0].replace(tzinfo = None):
                 return False
 
     return True
