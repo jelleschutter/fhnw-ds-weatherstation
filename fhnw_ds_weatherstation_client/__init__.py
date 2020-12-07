@@ -60,7 +60,7 @@ def __get_last_db_entry(config, station):
     if last_entry is None:
         try:
             # we are only interested in time, however need to provide any field to make query work
-            query = 'SELECT last(air_temperature) FROM "{}"'.format(station)
+            query = 'SELECT last(air_temperature) FROM "{}" ORDER BY time DESC LIMIT 1'.format(station)
             last_entry = config.client.query(query)
         except:
             # There are influxDB versions which have an issue with above "last" query
