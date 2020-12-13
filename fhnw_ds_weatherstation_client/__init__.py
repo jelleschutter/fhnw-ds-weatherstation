@@ -248,21 +248,24 @@ def import_latest_data(config, append_to_csv = False, periodic_read = False):
     check_db_day = min(last_db_days)
     check_db_day = check_db_day.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
 
+    first_cycle = True
+
     while True:
         # check if all historic data (retrieved from API) has been processed
-        if periodic_read and check_db_day >= current_day:
-            # once every 10 Min
-            sleep_until = current_time + timedelta(minutes = 10)
-            # once per day
-            # sleep_until = current_time + timedelta(days = 1)
-            # sleep_until = sleep_until.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
-            sleep_sec = (sleep_until - current_time).total_seconds()
+        if not first_cycle:
+            if periodic_read and check_db_day >= current_day and not first_cycle:
+                # once every 10 Min
+                sleep_until = current_time + timedelta(minutes = 10)
+                # once per day
+                # sleep_until = current_time + timedelta(days = 1)
+                # sleep_until = sleep_until.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
+                sleep_sec = (sleep_until - current_time).total_seconds()
 
-            print('Sleep for ' + str(sleep_sec) + 's (from ' + str(current_time) + ' until ' + str(sleep_until) + ') when next data will be queried.')
-            sleep(sleep_sec)
-            current_day = current_time.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
-        elif not periodic_read and check_db_day > current_day:
-            return
+                print('Sleep for ' + str(sleep_sec) + 's (from ' + str(current_time) + ' until ' + str(sleep_until) + ') when next data will be queried.')
+                sleep(sleep_sec)
+                current_day = current_time.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
+            elif not periodic_read and check_db_day >= current_day:
+                return
 
         for idx, station in enumerate(config.stations):
             if last_db_days[idx].replace(hour = 0, minute = 0, second = 0, microsecond = 0) > check_db_day:
@@ -284,7 +287,14 @@ def import_latest_data(config, append_to_csv = False, periodic_read = False):
                 print('Handle ' + station + ' from ' + str(normalized_data.index[0]) + ' to ' + str(normalized_data.index[-1]))
             else:
                 print('No new data received for ' + station)
-        check_db_day = check_db_day + pd.DateOffset(1)
+
+        if periodic_read and check_db_day < current_day:
+            check_db_day = check_db_day + pd.DateOffset(1)
+        elif periodic_read and check_db_day >= current_day:
+            check_db_day = datetime.utcnow() + timedelta(hours = 1)
+
+        if first_cycle:
+            first_cycle = False
 
 
 def db_is_up_to_date(config):
