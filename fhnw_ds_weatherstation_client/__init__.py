@@ -255,6 +255,7 @@ def import_latest_data(config, append_to_csv = False, periodic_read = False):
         # check if all historic data (retrieved from API) has been processed
         if not first_cycle and periodic_read and check_db_day >= current_day and not first_cycle:
             # once every 10 Min
+            current_time = datetime.utcnow() + timedelta(hours = 1)
             sleep_until = current_time + timedelta(minutes = 10)
             # once per day
             # sleep_until = current_time + timedelta(days = 1)
