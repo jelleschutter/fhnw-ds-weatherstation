@@ -288,7 +288,7 @@ def import_latest_data(config, append_to_csv = False, periodic_read = False):
             else:
                 print('No new data received for ' + station)
 
-        if periodic_read and check_db_day < current_day:
+        if check_db_day < current_day:
             check_db_day = check_db_day + pd.DateOffset(1)
         elif periodic_read and check_db_day >= current_day:
             check_db_day = datetime.utcnow() + timedelta(hours = 1)
