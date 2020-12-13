@@ -239,7 +239,7 @@ def import_latest_data(config, append_to_csv = False, periodic_read = False):
 
     for idx, station in enumerate(config.stations):
         last_db_entry = __get_last_db_entry(config, station)
-        last_db_days[idx] = __extract_last_db_day(last_db_entry, station, last_db_days[idx])
+        last_db_days[idx] = __extract_last_db_day(last_db_entry, station, last_db_days[idx]) + timedelta(hours = 1)
 
     if periodic_read and threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, __signal_handler)
@@ -249,23 +249,26 @@ def import_latest_data(config, append_to_csv = False, periodic_read = False):
     check_db_day = check_db_day.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
 
     first_cycle = True
+    last_cycle = False
 
     while True:
         # check if all historic data (retrieved from API) has been processed
-        if not first_cycle:
-            if periodic_read and check_db_day >= current_day and not first_cycle:
-                # once every 10 Min
-                sleep_until = current_time + timedelta(minutes = 10)
-                # once per day
-                # sleep_until = current_time + timedelta(days = 1)
-                # sleep_until = sleep_until.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
-                sleep_sec = (sleep_until - current_time).total_seconds()
+        if not first_cycle and periodic_read and check_db_day >= current_day and not first_cycle:
+            # once every 10 Min
+            sleep_until = current_time + timedelta(minutes = 10)
+            # once per day
+            # sleep_until = current_time + timedelta(days = 1)
+            # sleep_until = sleep_until.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
+            sleep_sec = (sleep_until - current_time).total_seconds()
 
-                print('Sleep for ' + str(sleep_sec) + 's (from ' + str(current_time) + ' until ' + str(sleep_until) + ') when next data will be queried.')
-                sleep(sleep_sec)
-                current_day = current_time.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
-            elif not periodic_read and check_db_day >= current_day:
+            print('Sleep for ' + str(sleep_sec) + 's (from ' + str(current_time) + ' until ' + str(sleep_until) + ') when next data will be queried.')
+            sleep(sleep_sec)
+            current_day = current_time.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
+
+        if not periodic_read and check_db_day >= current_day:
+            if last_cycle:
                 return
+            last_cycle = True
 
         for idx, station in enumerate(config.stations):
             if last_db_days[idx].replace(hour = 0, minute = 0, second = 0, microsecond = 0) > check_db_day:
