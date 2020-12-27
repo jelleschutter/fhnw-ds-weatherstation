@@ -314,7 +314,7 @@ def db_is_up_to_date(config):
     for station in config.stations:
         last_entry = __get_last_db_entry(config, station)
 
-        if last_entry[station].empty:
+        if last_entry is None or not last_entry or last_entry[station].empty:
             print('Database is empty.')
             return False
 
@@ -340,4 +340,3 @@ def db_is_up_to_date(config):
                 return False
 
     return True
-
