@@ -181,7 +181,8 @@ def connect_db(config):
    """
     if config.client is None:
         # https://www.influxdata.com/blog/getting-started-python-influxdb/
-        config.client = DataFrameClient(host = config.db_host, port = config.db_port, database = config.db_name)
+        config.client = DataFrameClient(host = config.db_host, port = config.db_port)
+        config.client.create_database(config.db_name)
         config.client.switch_database(config.db_name)
 
 def clean_db(config):
