@@ -314,7 +314,7 @@ def db_is_up_to_date(config):
     for station in config.stations:
         last_entry = __get_last_db_entry(config, station)
 
-        if last_entry is None or not last_entry or last_entry[station].empty:
+        if last_entry is None or not station in last_entry or last_entry[station].empty:
             print('Database is empty.')
             return False
 
@@ -331,12 +331,13 @@ def db_is_up_to_date(config):
                 max_file[station] = file_name
             running_year += 1
 
-        with open(max_file[station], 'r') as f:
-            headers = f.readline()
-            last_line = deque(f, 1)
-            last_line_csv = pd.read_csv(StringIO(headers + ''.join(last_line)))
-            last_csv_entry = __define_types(last_line_csv, '%Y-%m-%dT%H:%M:%S')
-            if last_csv_entry.index[0] != last_entry[station].index[0].replace(tzinfo = None):
-                return False
+        if station in max_file:
+            with open(max_file[station], 'r') as f:
+                headers = f.readline()
+                last_line = deque(f, 1)
+                last_line_csv = pd.read_csv(StringIO(headers + ''.join(last_line)))
+                last_csv_entry = __define_types(last_line_csv, '%Y-%m-%dT%H:%M:%S')
+                if last_csv_entry.index[0] != last_entry[station].index[0].replace(tzinfo = None):
+                    return False
 
     return True
